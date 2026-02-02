@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import authRoutes from './auth.routes';
 import userRoutes from './user.routes';
 import categoryRoutes from './category.routes';
 import brandRoutes from './brand.routes';
@@ -12,6 +13,9 @@ import flashSaleRoutes from './flash-sale.routes';
 import seedRoutes from './seed.routes';
 
 const router = Router();
+
+// Auth routes (public)
+router.use('/auth', authRoutes);
 
 // API v1 routes
 router.use('/users', userRoutes);
