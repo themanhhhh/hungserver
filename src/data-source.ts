@@ -32,7 +32,8 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_DATABASE || "ecommerce_db",
   synchronize: !isProduction, // Auto-sync in development only
   logging: !isProduction,
-  ssl: isProduction ? { rejectUnauthorized: false } : false,
+  // Enable SSL for Supabase connections (both dev and prod)
+  ssl: { rejectUnauthorized: false },
   extra: {
     // Force IPv4 to fix ENETUNREACH error on platforms like Render
     family: 4,
