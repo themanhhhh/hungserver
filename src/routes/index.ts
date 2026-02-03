@@ -10,6 +10,7 @@ import addressRoutes from './address.routes';
 import reviewRoutes from './review.routes';
 import campaignRoutes from './campaign.routes';
 import flashSaleRoutes from './flash-sale.routes';
+import uploadRoutes from './upload.routes';
 import seedRoutes from './seed.routes';
 
 const router = Router();
@@ -28,6 +29,7 @@ router.use('/addresses', addressRoutes);
 router.use('/reviews', reviewRoutes);
 router.use('/campaigns', campaignRoutes);
 router.use('/flash-sales', flashSaleRoutes);
+router.use('/upload', uploadRoutes);
 router.use('/seed', seedRoutes);
 
 export default router;
