@@ -149,4 +149,34 @@ export class AuthService {
     const { password_hash: _, ...userWithoutPassword } = user;
     return userWithoutPassword as Omit<User, 'password_hash'>;
   }
+
+  /**
+   * Change user password
+   */
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string
+  ): Promise<void> {
+    // Get user with password hash
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Verify current password
+    const isValidPassword = await this.comparePassword(currentPassword, user.password_hash);
+    if (!isValidPassword) {
+      throw new Error('Current password is incorrect');
+    }
+
+    // Validate new password
+    if (newPassword.length < 6) {
+      throw new Error('New password must be at least 6 characters');
+    }
+
+    // Hash new password and update
+    const newPasswordHash = await this.hashPassword(newPassword);
+    await this.userService.update(userId, { password_hash: newPasswordHash });
+  }
 }

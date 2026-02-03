@@ -111,4 +111,44 @@ export class AuthController {
       message: 'Logged out successfully',
     });
   }
+
+  /**
+   * Change user password
+   * POST /api/v1/auth/change-password
+   */
+  async changePassword(req: Request, res: Response): Promise<void> {
+    const user = (req as any).user;
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    // Validate required fields
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      throw new AppError('All fields are required', 400);
+    }
+
+    // Check if new passwords match
+    if (newPassword !== confirmPassword) {
+      throw new AppError('New passwords do not match', 400);
+    }
+
+    // Validate new password length
+    if (newPassword.length < 6) {
+      throw new AppError('New password must be at least 6 characters', 400);
+    }
+
+    try {
+      await this.authService.changePassword(user.id, currentPassword, newPassword);
+
+      res.json({
+        success: true,
+        message: 'Password changed successfully',
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === 'Current password is incorrect') {
+          throw new AppError('Current password is incorrect', 400);
+        }
+      }
+      throw error;
+    }
+  }
 }

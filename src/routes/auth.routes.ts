@@ -13,5 +13,6 @@ router.post('/logout', asyncHandler((req, res) => authController.logout(req, res
 
 // Protected routes
 router.get('/me', authenticate, asyncHandler((req, res) => authController.me(req, res)));
+router.post('/change-password', authenticate, asyncHandler((req, res) => authController.changePassword(req, res)));
 
 export default router;
