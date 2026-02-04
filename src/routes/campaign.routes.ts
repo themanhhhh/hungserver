@@ -7,6 +7,7 @@ const campaignController = new CampaignController();
 
 router.get('/', asyncHandler((req, res) => campaignController.findAll(req, res)));
 router.get('/active', asyncHandler((req, res) => campaignController.findActiveCampaigns(req, res)));
+router.get('/homepage', asyncHandler((req, res) => campaignController.findActiveForHomepage(req, res)));
 router.get('/:id', asyncHandler((req, res) => campaignController.findById(req, res)));
 router.get('/code/:code', asyncHandler((req, res) => campaignController.findByCode(req, res)));
 router.get('/validate/:code', asyncHandler((req, res) => campaignController.validateCampaign(req, res)));

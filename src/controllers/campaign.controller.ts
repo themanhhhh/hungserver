@@ -29,6 +29,14 @@ export class CampaignController extends BaseController<Campaign> {
     });
   }
 
+  async findActiveForHomepage(req: Request, res: Response): Promise<void> {
+    const campaigns = await this.campaignService.findActiveForHomepage();
+    res.json({
+      success: true,
+      data: campaigns,
+    });
+  }
+
   async validateCampaign(req: Request, res: Response): Promise<void> {
     const { code } = req.params;
     const result = await this.campaignService.validateCampaign(code);

@@ -19,6 +19,10 @@ export class CampaignService extends BaseService<Campaign> {
     return this.campaignRepository.findActiveCampaigns();
   }
 
+  async findActiveForHomepage(): Promise<Campaign[]> {
+    return this.campaignRepository.findActiveForHomepage();
+  }
+
   async validateCampaign(code: string): Promise<{ valid: boolean; campaign?: Campaign; message: string }> {
     const campaign = await this.findByCode(code);
     
