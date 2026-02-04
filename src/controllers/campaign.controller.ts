@@ -45,4 +45,43 @@ export class CampaignController extends BaseController<Campaign> {
       data: result,
     });
   }
+
+  async addProducts(req: Request, res: Response): Promise<void> {
+    const { id } = req.params;
+    const { productIds } = req.body;
+    
+    if (!productIds || !Array.isArray(productIds)) {
+      res.status(400).json({
+        success: false,
+        error: { message: 'productIds must be an array' },
+      });
+      return;
+    }
+
+    const campaign = await this.campaignService.addProducts(id, productIds);
+    res.json({
+      success: true,
+      data: campaign,
+    });
+  }
+
+  async removeProducts(req: Request, res: Response): Promise<void> {
+    const { id } = req.params;
+    const { productIds } = req.body;
+    
+    if (!productIds || !Array.isArray(productIds)) {
+      res.status(400).json({
+        success: false,
+        error: { message: 'productIds must be an array' },
+      });
+      return;
+    }
+
+    const campaign = await this.campaignService.removeProducts(id, productIds);
+    res.json({
+      success: true,
+      data: campaign,
+    });
+  }
 }
+

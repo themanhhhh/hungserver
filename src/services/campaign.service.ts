@@ -23,6 +23,14 @@ export class CampaignService extends BaseService<Campaign> {
     return this.campaignRepository.findActiveForHomepage();
   }
 
+  async addProducts(campaignId: string, productIds: string[]): Promise<Campaign | null> {
+    return this.campaignRepository.addProducts(campaignId, productIds);
+  }
+
+  async removeProducts(campaignId: string, productIds: string[]): Promise<Campaign | null> {
+    return this.campaignRepository.removeProducts(campaignId, productIds);
+  }
+
   async validateCampaign(code: string): Promise<{ valid: boolean; campaign?: Campaign; message: string }> {
     const campaign = await this.findByCode(code);
     
@@ -42,3 +50,4 @@ export class CampaignService extends BaseService<Campaign> {
     return { valid: true, campaign, message: 'Campaign is valid' };
   }
 }
+

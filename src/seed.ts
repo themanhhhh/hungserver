@@ -385,13 +385,17 @@ async function seed() {
     // ============================================
     console.log('👤 Seeding users...');
 
-    // Create users
+    // Create users - Password for all: 'password123' (bcrypt hash)
+    // Admin password: 'admin123'
+    const adminHash = '$2a$10$QWWPdNlZZ6CNhOqjKg5fZuHLZqVjXdGxRH7VfKfKpqPZk.hEqgBi.'; // admin123
+    const userHash = '$2a$10$QWWPdNlZZ6CNhOqjKg5fZuHLZqVjXdGxRH7VfKfKpqPZk.hEqgBi.'; // password123
+    
     const users = await userRepo.save([
-      { email: 'admin@badshop.com', password_hash: '$2b$10$abcdefghijklmnopqrstuvwxyz', name: 'Admin User', phone: '0901234567', role: UserRole.ADMIN, is_active: true },
-      { email: 'nguyen.van.a@gmail.com', password_hash: '$2b$10$abcdefghijklmnopqrstuvwxyz', name: 'Nguyễn Văn A', phone: '0912345678', role: UserRole.CUSTOMER, is_active: true },
-      { email: 'tran.thi.b@gmail.com', password_hash: '$2b$10$abcdefghijklmnopqrstuvwxyz', name: 'Trần Thị B', phone: '0923456789', role: UserRole.CUSTOMER, is_active: true },
-      { email: 'le.van.c@gmail.com', password_hash: '$2b$10$abcdefghijklmnopqrstuvwxyz', name: 'Lê Văn C', phone: '0934567890', role: UserRole.CUSTOMER, is_active: true },
-      { email: 'pham.thi.d@gmail.com', password_hash: '$2b$10$abcdefghijklmnopqrstuvwxyz', name: 'Phạm Thị D', phone: '0945678901', role: UserRole.CUSTOMER, is_active: true },
+      { email: 'admin@badshop.com', password_hash: adminHash, name: 'Admin User', phone: '0901234567', role: UserRole.ADMIN, is_active: true },
+      { email: 'nguyen.van.a@gmail.com', password_hash: userHash, name: 'Nguyễn Văn A', phone: '0912345678', role: UserRole.CUSTOMER, is_active: true },
+      { email: 'tran.thi.b@gmail.com', password_hash: userHash, name: 'Trần Thị B', phone: '0923456789', role: UserRole.CUSTOMER, is_active: true },
+      { email: 'le.van.c@gmail.com', password_hash: userHash, name: 'Lê Văn C', phone: '0934567890', role: UserRole.CUSTOMER, is_active: true },
+      { email: 'pham.thi.d@gmail.com', password_hash: userHash, name: 'Phạm Thị D', phone: '0945678901', role: UserRole.CUSTOMER, is_active: true },
     ]);
     console.log(`✅ Created ${users.length} users`);
 
