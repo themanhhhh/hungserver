@@ -21,6 +21,9 @@ export class ProductImage {
   @Column({ type: 'boolean', default: false })
   is_primary: boolean;
 
+  @Column({ type: 'int', default: 0 })
+  display_order: number;
+
   @Column({ type: 'boolean', default: false })
   is_delete: boolean;
 

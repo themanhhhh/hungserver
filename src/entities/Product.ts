@@ -81,6 +81,6 @@ export class Product {
   @OneToMany('FlashSaleProduct', 'product')
   flash_sale_products: FlashSaleProduct[];
 
-  @OneToMany('ProductImage', 'product')
+  @OneToMany('ProductImage', 'product', { cascade: true })
   product_images: ProductImage[];
 }
