@@ -12,6 +12,7 @@ import campaignRoutes from './campaign.routes';
 import flashSaleRoutes from './flash-sale.routes';
 import uploadRoutes from './upload.routes';
 import seedRoutes from './seed.routes';
+import statsRoutes from './stats.routes';
 
 const router = Router();
 
@@ -30,6 +31,7 @@ router.use('/reviews', reviewRoutes);
 router.use('/campaigns', campaignRoutes);
 router.use('/flash-sales', flashSaleRoutes);
 router.use('/upload', uploadRoutes);
+router.use('/stats', statsRoutes);
 router.use('/seed', seedRoutes);
 
 export default router;
