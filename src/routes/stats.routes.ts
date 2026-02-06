@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { StatsController } from '../controllers/stats.controller';
 import { asyncHandler } from '../middlewares/async.middleware';
 import { authenticate, authorize } from '../middlewares/auth.middleware';
+import { UserRole } from '../enums';
 
 const router = Router();
 const statsController = new StatsController();
@@ -10,7 +11,7 @@ const statsController = new StatsController();
 router.get(
   '/dashboard',
   authenticate,
-  authorize(['admin']),
+  authorize(UserRole.ADMIN),
   asyncHandler((req, res) => statsController.getDashboardStats(req, res))
 );
 
