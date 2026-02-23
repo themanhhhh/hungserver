@@ -25,7 +25,7 @@ export class StatsService {
       .andWhere('order.status != :status', { status: OrderStatus.CANCELLED }) // Exclude cancelled
       .getRawOne();
 
-    const totalRevenue = parseFloat(revenueResult.total || '0');
+    const totalRevenue = parseFloat(revenueResult?.total || '0');
 
     // Counts
     const totalOrders = await this.orderRepository.count({
