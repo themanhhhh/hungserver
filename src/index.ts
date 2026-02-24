@@ -1,8 +1,12 @@
 import 'reflect-metadata';
+import dns from 'dns';
 import express, { Express, Request, Response } from 'express';
 import { AppDataSource } from './data-source';
 import routes from './routes';
 import { errorMiddleware } from './middlewares/error.middleware';
+
+// Force DNS to prefer IPv4 over IPv6 to fix ENETUNREACH error on platforms like Render
+dns.setDefaultResultOrder('ipv4first');
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
