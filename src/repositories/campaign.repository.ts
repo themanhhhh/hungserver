@@ -38,7 +38,7 @@ export class CampaignRepository extends BaseRepository<Campaign> {
         end_date: MoreThanOrEqual(now),
         is_delete: false,
       },
-      relations: ['products', 'products.images', 'products.brand', 'products.category'],
+      relations: ['products', 'products.product_images', 'products.brand', 'products.category'],
       order: { display_order: 'ASC' },
     });
   }
