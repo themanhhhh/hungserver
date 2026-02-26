@@ -46,6 +46,15 @@ export class Order {
   @CreateDateColumn()
   created_at: Date;
 
+  @Column({ type: 'varchar', length: 6, nullable: true })
+  otp_code: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  otp_expires_at: Date;
+
+  @Column({ type: 'boolean', default: false })
+  is_verified: boolean;
+
   @Column({ type: 'boolean', default: false })
   is_delete: boolean;
 
