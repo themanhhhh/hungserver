@@ -7,6 +7,14 @@ export class ProductRepository extends BaseRepository<Product> {
     super(Product);
   }
 
+  // Override findById to include relations
+  async findById(id: string): Promise<Product | null> {
+    return this.repository.findOne({
+      where: { id, is_delete: false } as FindOptionsWhere<Product>,
+      relations: ['category', 'brand', 'product_images'],
+    });
+  }
+
   // Override findAll to include relations
   async findAll(options?: PaginationOptions): Promise<PaginatedResult<Product>> {
     const page = options?.page || 1;

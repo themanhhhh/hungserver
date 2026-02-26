@@ -37,6 +37,10 @@ export const AppDataSource = new DataSource({
   extra: {
     // Force IPv4 to fix ENETUNREACH error on platforms like Render
     family: 4,
+    // Disable prepared statements for Supabase connection pooler (pgBouncer)
+    // Transaction mode pooler doesn't support prepared statements
+    prepared: false,
+    statement_timeout: 30000,
   },
   entities: [
     User,
