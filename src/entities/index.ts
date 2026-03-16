@@ -13,3 +13,4 @@ export * from './Review';
 export * from './Campaign';
 export * from './FlashSale';
 export * from './FlashSaleProduct';
+export * from './Post';
