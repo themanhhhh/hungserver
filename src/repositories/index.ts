@@ -14,3 +14,4 @@ export * from './campaign.repository';
 export * from './flash-sale.repository';
 export * from './flash-sale-product.repository';
 export * from './post.repository';
+export * from './shipment.repository';

@@ -480,7 +480,7 @@ async function seed() {
       { order_number: 'ORD-2024-0001', user_id: users[1].id, total: 4500000, status: OrderStatus.DELIVERED, payment_status: PaymentStatus.PAID },
       { order_number: 'ORD-2024-0002', user_id: users[2].id, total: 7000000, status: OrderStatus.SHIPPING, payment_status: PaymentStatus.PAID },
       { order_number: 'ORD-2024-0003', user_id: users[1].id, total: 3200000, status: OrderStatus.CONFIRMED, payment_status: PaymentStatus.PAID },
-      { order_number: 'ORD-2024-0004', user_id: users[3].id, total: 2800000, status: OrderStatus.PENDING, payment_status: PaymentStatus.PENDING },
+      { order_number: 'ORD-2024-0004', user_id: users[3].id, total: 2800000, status: OrderStatus.PENDING_PAYMENT, payment_status: PaymentStatus.PENDING },
       { order_number: 'ORD-2024-0005', user_id: users[4].id, total: 950000, status: OrderStatus.DELIVERED, payment_status: PaymentStatus.PAID },
     ]);
 
