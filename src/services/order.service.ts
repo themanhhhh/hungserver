@@ -19,6 +19,10 @@ export class OrderService extends BaseService<Order> {
     this.emailService = new EmailService();
   }
 
+  async findAllWithFilters(options?: any): Promise<any> {
+    return this.orderRepository.findAllWithFilters(options);
+  }
+
   async findByOrderNumber(orderNumber: string): Promise<Order | null> {
     return this.orderRepository.findByOrderNumber(orderNumber);
   }

@@ -13,6 +13,26 @@ export class OrderController extends BaseController<Order> {
     this.orderService = orderService;
   }
 
+  async findAll(req: Request, res: Response): Promise<void> {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = req.query.search as string;
+    const status = req.query.status as string;
+    const date = req.query.date as string;
+
+    const result = await this.orderService.findAllWithFilters({ page, limit, search, status, date });
+    res.json({
+      success: true,
+      data: result.data,
+      pagination: {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: result.totalPages,
+      },
+    });
+  }
+
   async findByOrderNumber(req: Request, res: Response): Promise<void> {
     const { orderNumber } = req.params;
     const order = await this.orderService.findByOrderNumber(orderNumber);

@@ -21,6 +21,7 @@ import { Campaign } from "./entities/Campaign";
 import { FlashSale } from "./entities/FlashSale";
 import { FlashSaleProduct } from "./entities/FlashSaleProduct";
 import { Shipment } from "./entities/Shipment";
+import { Post } from "./entities/Post";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -59,6 +60,7 @@ export const AppDataSource = new DataSource({
     FlashSale,
     FlashSaleProduct,
     Shipment,
+    Post,
   ],
   migrations: [],
   subscribers: [],
