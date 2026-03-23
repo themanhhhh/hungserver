@@ -11,6 +11,7 @@ import { OrderStatus, PaymentStatus } from '../enums';
 import { User } from './User';
 import { Campaign } from './Campaign';
 import { OrderItem } from './OrderItem';
+import { Shipment } from './Shipment';
 
 @Entity('orders')
 export class Order {
@@ -32,7 +33,7 @@ export class Order {
   @Column({
     type: 'enum',
     enum: OrderStatus,
-    default: OrderStatus.PENDING,
+    default: OrderStatus.PENDING_PAYMENT,
   })
   status: OrderStatus;
 
@@ -69,4 +70,7 @@ export class Order {
 
   @OneToMany(() => OrderItem, (orderItem) => orderItem.order)
   order_items: OrderItem[];
+
+  @OneToMany(() => Shipment, (shipment) => shipment.order)
+  shipments: Shipment[];
 }

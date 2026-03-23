@@ -12,10 +12,40 @@ export enum ProductBadge {
 
 export enum OrderStatus {
   PENDING = 'pending',
+  PENDING_PAYMENT = 'pending_payment',
+  PAID = 'paid',
+  AWAITING_SHIPMENT = 'awaiting_shipment',
+  AWAITING_COLLECTION = 'awaiting_collection',
+  IN_TRANSIT = 'in_transit',
+  DELIVERED = 'delivered',
+  COMPLETED = 'completed',
   CONFIRMED = 'confirmed',
   SHIPPING = 'shipping',
-  DELIVERED = 'delivered',
   CANCELLED = 'cancelled',
+}
+
+export enum ShipmentStatus {
+  PENDING = 'pending',
+  PICKING = 'picking',
+  PACKING = 'packing',
+  READY_FOR_PICKUP = 'ready_for_pickup',
+  PICKED_UP = 'picked_up',
+  IN_TRANSIT = 'in_transit',
+  OUT_FOR_DELIVERY = 'out_for_delivery',
+  DELIVERED = 'delivered',
+  FAILED_DELIVERY = 'failed_delivery',
+  RETURNED = 'returned',
+}
+
+export enum ShippingMethod {
+  SELLER_FULFILLMENT = 'seller_fulfillment',
+  PLATFORM_FULFILLMENT = 'platform_fulfillment',
+}
+
+export enum CarrierService {
+  STANDARD = 'standard',
+  EXPRESS = 'express',
+  SAME_DAY = 'same_day',
 }
 
 export enum PaymentStatus {

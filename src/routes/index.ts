@@ -14,6 +14,7 @@ import uploadRoutes from './upload.routes';
 import seedRoutes from './seed.routes';
 import statsRoutes from './stats.routes';
 import postRoutes from './post.routes';
+import fulfillmentRoutes from './fulfillment.routes';
 
 const router = Router();
 
@@ -35,6 +36,7 @@ router.use('/upload', uploadRoutes);
 router.use('/stats', statsRoutes);
 router.use('/seed', seedRoutes);
 router.use('/posts', postRoutes);
+router.use('/fulfillment', fulfillmentRoutes);
 
 export default router;
 

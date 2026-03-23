@@ -14,3 +14,5 @@ export * from './campaign.service';
 export * from './flash-sale.service';
 export * from './flash-sale-product.service';
 export * from './post.service';
+export * from './shipment.service';
+export * from './fulfillment.service';

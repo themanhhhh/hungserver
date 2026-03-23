@@ -9,3 +9,4 @@ export * from './address.controller';
 export * from './review.controller';
 export * from './campaign.controller';
 export * from './flash-sale.controller';
+export * from './fulfillment.controller';
