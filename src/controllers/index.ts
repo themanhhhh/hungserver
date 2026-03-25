@@ -10,3 +10,4 @@ export * from './review.controller';
 export * from './campaign.controller';
 export * from './flash-sale.controller';
 export * from './fulfillment.controller';
+export * from './collection.controller';

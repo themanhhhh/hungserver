@@ -15,14 +15,14 @@ export class OrderRepository extends BaseRepository<Order> {
   async findByOrderNumber(orderNumber: string): Promise<Order | null> {
     return this.repository.findOne({
       where: { order_number: orderNumber, is_delete: false },
-      relations: ['order_items', 'user'],
+      relations: ['order_items', 'order_items.product', 'order_items.product.product_images', 'user'],
     });
   }
 
   async findByUser(userId: string): Promise<Order[]> {
     return this.repository.find({
       where: { user_id: userId, is_delete: false },
-      relations: ['order_items', 'order_items.product'],
+      relations: ['order_items', 'order_items.product', 'order_items.product.product_images'],
       order: { created_at: 'DESC' },
     });
   }
@@ -30,7 +30,7 @@ export class OrderRepository extends BaseRepository<Order> {
   async findWithDetails(id: string): Promise<Order | null> {
     return this.repository.findOne({
       where: { id, is_delete: false },
-      relations: ['order_items', 'order_items.product', 'user', 'campaign'],
+      relations: ['order_items', 'order_items.product', 'order_items.product.product_images', 'user', 'campaign'],
     });
   }
 
@@ -42,6 +42,7 @@ export class OrderRepository extends BaseRepository<Order> {
     const queryBuilder = this.repository.createQueryBuilder('order')
       .leftJoinAndSelect('order.order_items', 'order_items')
       .leftJoinAndSelect('order_items.product', 'product')
+      .leftJoinAndSelect('product.product_images', 'product_images')
       .leftJoinAndSelect('order.user', 'user')
       .where('order.is_delete = :isDelete', { isDelete: false });
 

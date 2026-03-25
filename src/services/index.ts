@@ -16,3 +16,4 @@ export * from './flash-sale-product.service';
 export * from './post.service';
 export * from './shipment.service';
 export * from './fulfillment.service';
+export * from './collection.service';

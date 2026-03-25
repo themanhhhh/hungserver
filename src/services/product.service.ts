@@ -63,6 +63,10 @@ export class ProductService extends BaseService<Product> {
     return this.productRepository.findByBrand(brandId);
   }
 
+  async findByCollection(collectionId: string): Promise<Product[]> {
+    return this.productRepository.findByCollection(collectionId);
+  }
+
   async findWithRelations(id: string): Promise<Product | null> {
     return this.productRepository.findWithRelations(id);
   }

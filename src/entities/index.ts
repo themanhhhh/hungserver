@@ -15,3 +15,4 @@ export * from './FlashSale';
 export * from './FlashSaleProduct';
 export * from './Post';
 export * from './Shipment';
+export * from './Collection';

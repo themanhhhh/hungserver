@@ -4,6 +4,8 @@ import {
   Column,
   ManyToOne,
   OneToMany,
+  ManyToMany,
+  JoinTable,
   JoinColumn,
 } from 'typeorm';
 import { ProductBadge } from '../enums';
@@ -14,6 +16,7 @@ import type { CartItem } from './CartItem';
 import type { Review } from './Review';
 import type { FlashSaleProduct } from './FlashSaleProduct';
 import type { ProductImage } from './ProductImage';
+import { Collection } from './Collection';
 
 @Entity('products')
 export class Product {
@@ -83,4 +86,12 @@ export class Product {
 
   @OneToMany('ProductImage', 'product', { cascade: true })
   product_images: ProductImage[];
+
+  @ManyToMany(() => Collection, (collection) => collection.products)
+  @JoinTable({
+    name: 'product_collections',
+    joinColumn: { name: 'product_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'collection_id', referencedColumnName: 'id' },
+  })
+  collections: Collection[];
 }

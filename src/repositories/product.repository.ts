@@ -65,6 +65,17 @@ export class ProductRepository extends BaseRepository<Product> {
     });
   }
 
+  async findByCollection(collectionId: string): Promise<Product[]> {
+    return this.repository.find({
+      where: { 
+        collections: { id: collectionId },
+        is_active: true, 
+        is_delete: false 
+      },
+      relations: ['category', 'brand', 'product_images'],
+    });
+  }
+
   async findWithRelations(id: string): Promise<Product | null> {
     return this.repository.findOne({
       where: { id, is_delete: false },

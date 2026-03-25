@@ -45,6 +45,15 @@ export class ProductController extends BaseController<Product> {
     });
   }
 
+  async findByCollection(req: Request, res: Response): Promise<void> {
+    const { collectionId } = req.params;
+    const products = await this.productService.findByCollection(collectionId);
+    res.json({
+      success: true,
+      data: products,
+    });
+  }
+
   async findWithRelations(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
     const product = await this.productService.findWithRelations(id);
