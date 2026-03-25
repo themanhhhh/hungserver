@@ -8,8 +8,8 @@ const collectionController = new CollectionController();
 
 // Public routes
 router.get('/', collectionController.findAll.bind(collectionController));
-router.get('/:id', collectionController.findById.bind(collectionController));
 router.get('/slug/:slug', collectionController.findBySlug.bind(collectionController));
+router.get('/:id', collectionController.findById.bind(collectionController));
 
 // Admin routes
 router.use(authenticate);

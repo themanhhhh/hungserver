@@ -15,7 +15,7 @@ export class CollectionRepository extends BaseRepository<Collection> {
       where: { is_delete: false },
       skip,
       take: limit,
-      relations: ['products'],
+      relations: ['products', 'products.product_images'],
       order: { id: 'DESC' } // Default sort newest first for collections
     });
 
