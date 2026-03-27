@@ -14,6 +14,37 @@ export class ProductService extends BaseService<Product> {
     this.productRepository = productRepository;
   }
 
+  // Override create to handle images
+  async create(data: DeepPartial<Product> & { images?: { url: string; display_order?: number }[] }): Promise<Product> {
+    const { images, ...productData } = data as any;
+
+    // Create product
+    const product = await super.create(productData);
+
+    // If images array is provided, create product_images
+    if (images && Array.isArray(images) && images.length > 0) {
+      const imageRepo = AppDataSource.getRepository(ProductImage);
+
+      const newImages = images.map((img: any, index: number) => {
+        return imageRepo.create({
+          product_id: product.id,
+          image_url: img.url || img.image_url,
+          is_primary: index === 0,
+          display_order: img.display_order ?? index,
+        });
+      });
+      await imageRepo.save(newImages);
+      
+      // Return product with images
+      const productWithRelations = await this.productRepository.findWithRelations(product.id);
+      if (productWithRelations) {
+        return productWithRelations;
+      }
+    }
+
+    return product;
+  }
+
   // Override update to handle images
   async update(id: string, data: DeepPartial<Product> & { images?: { url: string; display_order?: number }[] }): Promise<Product | null> {
     const { images, ...productData } = data as any;
