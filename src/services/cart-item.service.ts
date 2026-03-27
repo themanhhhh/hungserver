@@ -32,11 +32,11 @@ export class CartItemService extends BaseService<CartItem> {
   }
 
   async updateQuantity(cartId: string, productId: string, quantity: number): Promise<CartItem | null> {
-    const item = await this.cartItemRepository.findByCartAndProduct(cartId, productId);
+    const item = await this.cartItemRepository.findByCartAndProductOrItemId(cartId, productId);
     if (!item) return null;
 
     if (quantity <= 0) {
-      await this.cartItemRepository.removeByCartAndProduct(cartId, productId);
+      await this.cartItemRepository.removeByCartAndProductOrItemId(cartId, productId);
       return null;
     }
 
@@ -44,7 +44,7 @@ export class CartItemService extends BaseService<CartItem> {
   }
 
   async removeFromCart(cartId: string, productId: string): Promise<boolean> {
-    return this.cartItemRepository.removeByCartAndProduct(cartId, productId);
+    return this.cartItemRepository.removeByCartAndProductOrItemId(cartId, productId);
   }
 
   async clearCart(cartId: string): Promise<void> {
