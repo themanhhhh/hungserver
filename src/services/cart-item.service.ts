@@ -1,7 +1,6 @@
 import { BaseService } from './base.service';
 import { CartItem } from '../entities/CartItem';
 import { CartItemRepository } from '../repositories/cart-item.repository';
-import { DeepPartial } from 'typeorm';
 
 export class CartItemService extends BaseService<CartItem> {
   private cartItemRepository: CartItemRepository;
@@ -30,5 +29,25 @@ export class CartItemService extends BaseService<CartItem> {
       product_id: productId,
       quantity,
     });
+  }
+
+  async updateQuantity(cartId: string, productId: string, quantity: number): Promise<CartItem | null> {
+    const item = await this.cartItemRepository.findByCartAndProduct(cartId, productId);
+    if (!item) return null;
+
+    if (quantity <= 0) {
+      await this.cartItemRepository.removeByCartAndProduct(cartId, productId);
+      return null;
+    }
+
+    return this.update(item.id, { quantity }) as Promise<CartItem>;
+  }
+
+  async removeFromCart(cartId: string, productId: string): Promise<boolean> {
+    return this.cartItemRepository.removeByCartAndProduct(cartId, productId);
+  }
+
+  async clearCart(cartId: string): Promise<void> {
+    return this.cartItemRepository.clearByCart(cartId);
   }
 }
