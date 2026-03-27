@@ -50,7 +50,7 @@ export class Product {
   @Column({
     type: 'enum',
     enum: ProductBadge,
-    default: ProductBadge.NONE,
+    default: ProductBadge.NEW,
   })
   badge: ProductBadge;
 
