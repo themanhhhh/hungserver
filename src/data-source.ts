@@ -34,7 +34,7 @@ export const AppDataSource = new DataSource({
   password: process.env.DB_PASSWORD || "postgres",
   database: process.env.DB_DATABASE || "ecommerce_db",
   synchronize: !isProduction, // Auto-sync in development only
-  logging: !isProduction,
+  logging: ["error"],
   // Enable SSL for Supabase connections (both dev and prod)
   ssl: { rejectUnauthorized: false },
   extra: {
