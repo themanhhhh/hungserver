@@ -236,7 +236,7 @@ export class FulfillmentService {
 
     if (status === ShipmentStatus.DELIVERED) {
       await this.orderService.update(orderId, {
-        status: OrderStatus.DELIVERED,
+        status: OrderStatus.COMPLETED,
       } as any);
     }
 
@@ -335,7 +335,7 @@ export class FulfillmentService {
 
     if (newStatus === ShipmentStatus.DELIVERED) {
       await this.orderService.update(shipment.order_id, {
-        status: OrderStatus.DELIVERED,
+        status: OrderStatus.COMPLETED,
       } as any);
     } else if (newStatus === ShipmentStatus.IN_TRANSIT) {
       await this.orderService.update(shipment.order_id, {

@@ -7,6 +7,18 @@ import { DeepPartial } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { AppDataSource } from '../data-source';
 import { EmailService } from './email.service';
+import { OrderStatus } from '../enums';
+
+function normalizeOrderStatus(status?: string): OrderStatus | undefined {
+  if (!status) return undefined;
+
+  const statusMap: Record<string, OrderStatus> = {
+    processing: OrderStatus.CONFIRMED,
+    shipped: OrderStatus.SHIPPING,
+  };
+
+  return statusMap[status] || (status as OrderStatus);
+}
 
 export class OrderService extends BaseService<Order> {
   private orderRepository: OrderRepository;
@@ -50,7 +62,7 @@ export class OrderService extends BaseService<Order> {
       order_number: orderNumber,
       user_id: data.user_id || data.userId,
       total: data.total || 0,
-      status: data.status || 'pending',
+      status: normalizeOrderStatus(data.status) || OrderStatus.PENDING,
       payment_status: data.payment_status || data.paymentStatus || 'pending',
       campaign_id: data.campaign_id || data.campaignId || undefined,
       otp_code: otpCode,
@@ -86,6 +98,15 @@ export class OrderService extends BaseService<Order> {
     }
     
     return order;
+  }
+
+  async update(id: string, data: DeepPartial<Order>): Promise<Order | null> {
+    const normalizedData = {
+      ...data,
+      status: normalizeOrderStatus(data.status as string) as any,
+    };
+
+    return super.update(id, normalizedData);
   }
 
   async verifyOTP(orderId: string, otpCode: string): Promise<{ success: boolean; message: string }> {
