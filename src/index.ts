@@ -12,19 +12,25 @@ const app: Express = express();
 const port = process.env.PORT || 3000;
 
 // CORS configuration
+const envOrigins = [
+  process.env.CLIENT_URL,
+  ...(process.env.CLIENT_URLS?.split(',').map((origin) => origin.trim()) || []),
+].filter(Boolean);
+
 const allowedOrigins = [
   'http://localhost:3001',
   'http://localhost:3000',
-  process.env.CLIENT_URL,
-].filter(Boolean);
+  ...envOrigins,
+];
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   } else if (!origin) {
-    // Allow requests without origin (like server-to-server)
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // Allow requests without origin (like server-to-server or curl)
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
   }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
