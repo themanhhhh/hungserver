@@ -2,6 +2,7 @@ import { BaseService } from './base.service';
 import { User } from '../entities/User';
 import { UserRepository } from '../repositories/user.repository';
 import { DeepPartial } from 'typeorm';
+import * as bcrypt from 'bcryptjs';
 
 export class UserService extends BaseService<User> {
   private userRepository: UserRepository;
@@ -28,6 +29,15 @@ export class UserService extends BaseService<User> {
         throw new Error('Email already exists');
       }
     }
-    return this.create(data);
+
+    const payload = { ...data } as DeepPartial<User> & { password?: string };
+
+    if (payload.password && !payload.password_hash) {
+      payload.password_hash = await bcrypt.hash(payload.password, 10);
+    }
+
+    delete payload.password;
+
+    return this.create(payload);
   }
 }
