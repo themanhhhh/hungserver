@@ -64,6 +64,7 @@ export class VoucherService {
       .leftJoinAndSelect('voucher.categories', 'categories')
       .leftJoinAndSelect('voucher.brands', 'brands')
       .where('voucher.is_delete = false')
+      .andWhere('voucher.discount_type = :percentageType', { percentageType: VoucherDiscountType.PERCENTAGE })
       .orderBy('voucher.created_at', 'DESC');
 
     if (filters.q) {
@@ -106,6 +107,7 @@ export class VoucherService {
       .where('voucher.is_delete = false')
       .andWhere('voucher.is_public = true')
       .andWhere('voucher.status = :status', { status: VoucherStatus.ACTIVE })
+      .andWhere('voucher.discount_type = :discountType', { discountType: VoucherDiscountType.PERCENTAGE })
       .andWhere('voucher.start_date <= :now AND voucher.end_date >= :now', { now })
       .andWhere('(voucher.total_usage_limit IS NULL OR voucher.usage_count < voucher.total_usage_limit)')
       .orderBy('voucher.created_at', 'DESC')
@@ -122,6 +124,9 @@ export class VoucherService {
     if (!voucher) {
       return this.invalidResult(input, 'Voucher không tồn tại');
     }
+    if (voucher.discount_type !== VoucherDiscountType.PERCENTAGE) {
+      return this.invalidResult(input, 'Hệ thống chỉ hỗ trợ voucher giảm theo phần trăm', voucher);
+    }
 
     const basicValidationMessage = await this.getBasicValidationError(voucher, input.userId);
     if (basicValidationMessage) {
@@ -133,12 +138,12 @@ export class VoucherService {
     }
 
     const eligibleSubtotal = await this.calculateEligibleSubtotal(voucher, input.items);
-    if (voucher.discount_type !== VoucherDiscountType.FREE_SHIPPING && eligibleSubtotal <= 0) {
+    if (eligibleSubtotal <= 0) {
       return this.invalidResult(input, 'Giỏ hàng không có sản phẩm phù hợp với voucher', voucher);
     }
 
     const discountAmount = this.calculateDiscountAmount(voucher, eligibleSubtotal, input.subtotal);
-    const shippingDiscount = this.calculateShippingDiscount(voucher, input.shippingFee);
+    const shippingDiscount = 0;
     const finalTotal = Math.max(0, Number(input.subtotal || 0) + Number(input.shippingFee || 0) - discountAmount - shippingDiscount);
 
     return {
@@ -275,9 +280,6 @@ export class VoucherService {
   }
 
   private async calculateEligibleSubtotal(voucher: Voucher, items: VoucherCartItem[]): Promise<number> {
-    if (voucher.discount_type === VoucherDiscountType.FREE_SHIPPING) {
-      return 0;
-    }
     if (voucher.scope_type === VoucherScopeType.ALL) {
       return this.calculateItemsSubtotal(items);
     }
@@ -318,20 +320,9 @@ export class VoucherService {
   }
 
   private calculateDiscountAmount(voucher: Voucher, eligibleSubtotal: number, cartSubtotal: number): number {
-    if (voucher.discount_type === VoucherDiscountType.FREE_SHIPPING) return 0;
-
-    const rawDiscount = voucher.discount_type === VoucherDiscountType.PERCENTAGE
-      ? eligibleSubtotal * (Number(voucher.discount_value || 0) / 100)
-      : Number(voucher.discount_value || 0);
+    const rawDiscount = eligibleSubtotal * (Number(voucher.discount_value || 0) / 100);
     const cappedByMax = voucher.max_discount_amount ? Math.min(rawDiscount, Number(voucher.max_discount_amount)) : rawDiscount;
     return Math.max(0, Math.min(cappedByMax, Number(cartSubtotal || 0)));
-  }
-
-  private calculateShippingDiscount(voucher: Voucher, shippingFee: number): number {
-    if (voucher.discount_type !== VoucherDiscountType.FREE_SHIPPING) return 0;
-
-    const maxShippingDiscount = voucher.max_discount_amount ? Number(voucher.max_discount_amount) : Number(shippingFee || 0);
-    return Math.max(0, Math.min(Number(shippingFee || 0), maxShippingDiscount));
   }
 
   private toVoucherData(data: VoucherPayload, code: string): Partial<Voucher> {
@@ -359,6 +350,7 @@ export class VoucherService {
       }
     });
     voucherData.code = code;
+    voucherData.discount_type = VoucherDiscountType.PERCENTAGE;
 
     return voucherData;
   }
@@ -370,13 +362,13 @@ export class VoucherService {
     if (!data.code?.trim()) {
       throw new AppError('Mã voucher là bắt buộc', 400);
     }
-    if (!data.discount_type) {
-      throw new AppError('Loại giảm giá là bắt buộc', 400);
+    if (data.discount_type && data.discount_type !== VoucherDiscountType.PERCENTAGE) {
+      throw new AppError('Hệ thống chỉ hỗ trợ voucher giảm theo phần trăm', 400);
     }
-    if (Number(data.discount_value || 0) <= 0 && data.discount_type !== VoucherDiscountType.FREE_SHIPPING) {
-      throw new AppError('Giá trị giảm giá phải lớn hơn 0', 400);
+    if (Number(data.discount_value || 0) <= 0) {
+      throw new AppError('Phần trăm giảm giá phải lớn hơn 0', 400);
     }
-    if (data.discount_type === VoucherDiscountType.PERCENTAGE && Number(data.discount_value) > 100) {
+    if (Number(data.discount_value) > 100) {
       throw new AppError('Giảm giá phần trăm không được vượt quá 100%', 400);
     }
     if (Number(data.minimum_spend || 0) < 0) {

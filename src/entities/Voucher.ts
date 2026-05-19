@@ -48,7 +48,7 @@ export class Voucher {
   @Column({ type: 'enum', enum: VoucherStatus, default: VoucherStatus.DRAFT })
   status: VoucherStatus;
 
-  @Column({ type: 'enum', enum: VoucherDiscountType })
+  @Column({ type: 'enum', enum: VoucherDiscountType, default: VoucherDiscountType.PERCENTAGE })
   discount_type: VoucherDiscountType;
 
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
