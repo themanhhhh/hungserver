@@ -8,6 +8,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { AppDataSource } from '../data-source';
 import { EmailService } from './email.service';
 import { OrderStatus } from '../enums';
+import { AppError } from '../middlewares/error.middleware';
+import { VoucherService } from './voucher.service';
 
 function normalizeOrderStatus(status?: string): OrderStatus | undefined {
   if (!status) return undefined;
@@ -23,12 +25,14 @@ function normalizeOrderStatus(status?: string): OrderStatus | undefined {
 export class OrderService extends BaseService<Order> {
   private orderRepository: OrderRepository;
   private emailService: EmailService;
+  private voucherService: VoucherService;
 
   constructor() {
     const orderRepository = new OrderRepository();
     super(orderRepository);
     this.orderRepository = orderRepository;
     this.emailService = new EmailService();
+    this.voucherService = new VoucherService();
   }
 
   async findAllWithFilters(options?: any): Promise<any> {
@@ -52,6 +56,41 @@ export class OrderService extends BaseService<Order> {
     
     // Extract items from request body
     const items = data.items || [];
+    const subtotal = Number(data.subtotal ?? items.reduce((sum: number, item: any) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0));
+    const shippingFee = Number(data.shipping_fee ?? data.shippingFee ?? 0);
+    let discountAmount = 0;
+    let shippingDiscount = 0;
+    let voucherId: string | undefined;
+    let promotionSnapshot: string | undefined;
+
+    if (data.voucher_code || data.voucherCode || data.voucher_id || data.voucherId) {
+      const validation = await this.voucherService.validateVoucher({
+        code: data.voucher_code || data.voucherCode,
+        voucherId: data.voucher_id || data.voucherId,
+        userId: data.user_id || data.userId,
+        items,
+        subtotal,
+        shippingFee,
+      });
+
+      if (!validation.valid || !validation.voucher) {
+        throw new AppError(validation.message || 'Voucher không hợp lệ', 400);
+      }
+
+      voucherId = validation.voucher.id;
+      discountAmount = validation.discountAmount;
+      shippingDiscount = validation.shippingDiscount;
+      promotionSnapshot = JSON.stringify({
+        voucher_id: validation.voucher.id,
+        code: validation.voucher.code,
+        name: validation.voucher.name,
+        discount_type: validation.voucher.discount_type,
+        discount_value: validation.voucher.discount_value,
+        discount_amount: discountAmount,
+        shipping_discount: shippingDiscount,
+      });
+    }
+    const finalTotal = Math.max(0, subtotal + shippingFee - discountAmount - shippingDiscount);
     
     // Generate OTP
     const otpCode = this.emailService.generateOTP();
@@ -61,7 +100,13 @@ export class OrderService extends BaseService<Order> {
     const orderData: DeepPartial<Order> = {
       order_number: orderNumber,
       user_id: data.user_id || data.userId,
-      total: data.total || 0,
+      voucher_id: voucherId,
+      subtotal,
+      shipping_fee: shippingFee,
+      discount_amount: discountAmount,
+      shipping_discount: shippingDiscount,
+      promotion_snapshot: promotionSnapshot,
+      total: finalTotal,
       status: normalizeOrderStatus(data.status) || OrderStatus.PENDING,
       payment_status: data.payment_status || data.paymentStatus || 'pending',
       campaign_id: data.campaign_id || data.campaignId || undefined,
@@ -83,6 +128,10 @@ export class OrderService extends BaseService<Order> {
       }));
       await orderItemRepo.save(orderItems);
       order.order_items = orderItems;
+    }
+
+    if (voucherId) {
+      await this.voucherService.deductUsage(voucherId);
     }
     
     // Send OTP email to user

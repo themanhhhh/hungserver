@@ -8,6 +8,7 @@
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "seed": "ts-node src/seed.ts",
+    "seed:demo": "ts-node src/seed-demo-data.ts",
     "typeorm": "typeorm-ts-node-commonjs"
   },
   "keywords": [

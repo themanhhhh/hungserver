@@ -16,6 +16,7 @@ import statsRoutes from './stats.routes';
 import postRoutes from './post.routes';
 import fulfillmentRoutes from './fulfillment.routes';
 import collectionRoutes from './collection.routes';
+import voucherRoutes from './voucher.routes';
 
 const router = Router();
 
@@ -39,6 +40,7 @@ router.use('/seed', seedRoutes);
 router.use('/posts', postRoutes);
 router.use('/fulfillment', fulfillmentRoutes);
 router.use('/collections', collectionRoutes);
+router.use('/vouchers', voucherRoutes);
 
 export default router;
 

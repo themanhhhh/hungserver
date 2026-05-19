@@ -11,3 +11,4 @@ export * from './campaign.controller';
 export * from './flash-sale.controller';
 export * from './fulfillment.controller';
 export * from './collection.controller';
+export * from './voucher.controller';

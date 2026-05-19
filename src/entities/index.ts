@@ -16,3 +16,4 @@ export * from './FlashSaleProduct';
 export * from './Post';
 export * from './Shipment';
 export * from './Collection';
+export * from './Voucher';

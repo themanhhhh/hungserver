@@ -1,9 +1,10 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
 import * as dotenv from "dotenv";
+import * as path from "path";
 
-// Load environment variables
-dotenv.config();
+// Load server/.env regardless of the current working directory.
+dotenv.config({ path: process.env.DOTENV_CONFIG_PATH || path.resolve(__dirname, "../.env") });
 
 // Import all entities
 import { User } from "./entities/User";
@@ -23,6 +24,7 @@ import { FlashSaleProduct } from "./entities/FlashSaleProduct";
 import { Shipment } from "./entities/Shipment";
 import { Post } from "./entities/Post";
 import { Collection } from "./entities/Collection";
+import { Voucher } from "./entities/Voucher";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -63,6 +65,7 @@ export const AppDataSource = new DataSource({
     Shipment,
     Post,
     Collection,
+    Voucher,
   ],
   migrations: [],
   subscribers: [],

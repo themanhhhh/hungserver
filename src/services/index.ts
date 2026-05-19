@@ -17,3 +17,4 @@ export * from './post.service';
 export * from './shipment.service';
 export * from './fulfillment.service';
 export * from './collection.service';
+export * from './voucher.service';
