@@ -4,8 +4,9 @@ import { OrderItem } from '../entities/OrderItem';
 import { Product } from '../entities/Product';
 import { User } from '../entities/User';
 import { Voucher } from '../entities/Voucher';
+import { Campaign, CampaignStatus } from '../entities/Campaign';
 import { OrderRepository } from '../repositories/order.repository';
-import { DeepPartial, EntityManager } from 'typeorm';
+import { DeepPartial, EntityManager, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { AppDataSource } from '../data-source';
 import { EmailService } from './email.service';
@@ -23,6 +24,20 @@ function normalizeOrderStatus(status?: string): OrderStatus | undefined {
 
   return statusMap[status] || (status as OrderStatus);
 }
+
+type PricedOrderItem = {
+  productId: string;
+  quantity: number;
+  price: number;
+  originalPrice: number;
+  campaign?: {
+    id: string;
+    code: string;
+    name: string;
+    discount_type: string;
+    discount_value: number;
+  };
+};
 
 export class OrderService extends BaseService<Order> {
   private orderRepository: OrderRepository;
@@ -62,20 +77,31 @@ export class OrderService extends BaseService<Order> {
       throw new AppError('Đơn hàng phải có ít nhất một sản phẩm', 400);
     }
 
-    const normalizedItems = this.normalizeOrderItems(items);
-    const subtotal = Number(data.subtotal ?? items.reduce((sum: number, item: any) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0));
+    const normalizedItems = await this.normalizeOrderItems(items);
+    const subtotal = normalizedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const shippingFee = Number(data.shipping_fee ?? data.shippingFee ?? 0);
     let discountAmount = 0;
     let shippingDiscount = 0;
     let voucherId: string | undefined;
-    let promotionSnapshot: string | undefined;
+    const promotionDetails: Record<string, unknown> = {};
+    const appliedCampaigns = Array.from(
+      new Map(
+        normalizedItems
+          .filter((item) => item.campaign)
+          .map((item) => [item.campaign!.id, item.campaign!])
+      ).values()
+    );
+
+    if (appliedCampaigns.length > 0) {
+      promotionDetails.campaigns = appliedCampaigns;
+    }
 
     if (data.voucher_code || data.voucherCode || data.voucher_id || data.voucherId) {
       const validation = await this.voucherService.validateVoucher({
         code: data.voucher_code || data.voucherCode,
         voucherId: data.voucher_id || data.voucherId,
         userId: data.user_id || data.userId,
-        items,
+        items: normalizedItems,
         subtotal,
         shippingFee,
       });
@@ -87,7 +113,7 @@ export class OrderService extends BaseService<Order> {
       voucherId = validation.voucher.id;
       discountAmount = validation.discountAmount;
       shippingDiscount = validation.shippingDiscount;
-      promotionSnapshot = JSON.stringify({
+      promotionDetails.voucher = {
         voucher_id: validation.voucher.id,
         code: validation.voucher.code,
         name: validation.voucher.name,
@@ -95,9 +121,10 @@ export class OrderService extends BaseService<Order> {
         discount_value: validation.voucher.discount_value,
         discount_amount: discountAmount,
         shipping_discount: shippingDiscount,
-      });
+      };
     }
     const finalTotal = Math.max(0, subtotal + shippingFee - discountAmount - shippingDiscount);
+    const promotionSnapshot = Object.keys(promotionDetails).length > 0 ? JSON.stringify(promotionDetails) : undefined;
     
     // Generate OTP
     const otpCode = this.emailService.generateOTP();
@@ -116,7 +143,7 @@ export class OrderService extends BaseService<Order> {
       total: finalTotal,
       status: normalizeOrderStatus(data.status) || OrderStatus.PENDING,
       payment_status: data.payment_status || data.paymentStatus || 'pending',
-      campaign_id: data.campaign_id || data.campaignId || undefined,
+      campaign_id: data.campaign_id || data.campaignId || (appliedCampaigns.length === 1 ? appliedCampaigns[0].id : undefined),
       otp_code: otpCode,
       otp_expires_at: otpExpiresAt,
       is_verified: false,
@@ -157,11 +184,10 @@ export class OrderService extends BaseService<Order> {
     return order;
   }
 
-  private normalizeOrderItems(items: any[]): Array<{ productId: string; quantity: number; price: number }> {
-    return items.map((item) => {
+  private async normalizeOrderItems(items: any[]): Promise<PricedOrderItem[]> {
+    const requestedItems = items.map((item) => {
       const productId = item.product_id || item.productId;
       const quantity = Number(item.quantity || 0);
-      const price = Number(item.price || 0);
 
       if (!productId) {
         throw new AppError('Sản phẩm trong đơn hàng không hợp lệ', 400);
@@ -169,12 +195,102 @@ export class OrderService extends BaseService<Order> {
       if (!Number.isInteger(quantity) || quantity <= 0) {
         throw new AppError('Số lượng sản phẩm phải lớn hơn 0', 400);
       }
-      if (price < 0) {
-        throw new AppError('Giá sản phẩm không hợp lệ', 400);
+
+      return { productId, quantity };
+    });
+
+    const productIds = [...new Set(requestedItems.map((item) => item.productId))];
+    const products = await AppDataSource.getRepository(Product).find({
+      where: { id: In(productIds), is_delete: false, is_active: true },
+    });
+
+    if (products.length !== productIds.length) {
+      throw new AppError('Một hoặc nhiều sản phẩm không tồn tại hoặc đã ngừng bán', 400);
+    }
+
+    const productMap = new Map(products.map((product) => [product.id, product]));
+    const campaignMap = await this.findBestActiveCampaignByProduct(productIds);
+
+    return requestedItems.map((item) => {
+      const product = productMap.get(item.productId)!;
+      const originalPrice = Number(product.price || 0);
+      const campaign = campaignMap.get(item.productId);
+
+      if (!campaign) {
+        return { ...item, price: originalPrice, originalPrice };
       }
 
-      return { productId, quantity, price };
+      return {
+        ...item,
+        price: campaign.price,
+        originalPrice,
+        campaign: {
+          id: campaign.id,
+          code: campaign.code,
+          name: campaign.name,
+          discount_type: campaign.discount_type,
+          discount_value: campaign.discount_value,
+        },
+      };
     });
+  }
+
+  private async findBestActiveCampaignByProduct(productIds: string[]): Promise<Map<string, {
+    id: string;
+    code: string;
+    name: string;
+    discount_type: string;
+    discount_value: number;
+    price: number;
+  }>> {
+    const now = new Date();
+    const campaigns = await AppDataSource.getRepository(Campaign).find({
+      where: {
+        status: CampaignStatus.ACTIVE,
+        start_date: LessThanOrEqual(now),
+        end_date: MoreThanOrEqual(now),
+        is_delete: false,
+      },
+      relations: ['products'],
+      order: { display_order: 'ASC' },
+    });
+
+    const productSet = new Set(productIds);
+    const bestByProduct = new Map<string, {
+      id: string;
+      code: string;
+      name: string;
+      discount_type: string;
+      discount_value: number;
+      price: number;
+    }>();
+
+    campaigns.forEach((campaign) => {
+      (campaign.products || []).forEach((product) => {
+        if (!productSet.has(product.id)) return;
+
+        const originalPrice = Number(product.price || 0);
+        const discountValue = Number(campaign.discount_value || 0);
+        const discountedPrice = campaign.discount_type === 'percentage'
+          ? originalPrice * (1 - discountValue / 100)
+          : originalPrice - discountValue;
+        const price = discountValue > 0 ? Math.max(0, Math.round(discountedPrice)) : originalPrice;
+        const currentBest = bestByProduct.get(product.id);
+
+        if (!currentBest || price < currentBest.price) {
+          bestByProduct.set(product.id, {
+            id: campaign.id,
+            code: campaign.code,
+            name: campaign.name,
+            discount_type: campaign.discount_type,
+            discount_value: discountValue,
+            price,
+          });
+        }
+      });
+    });
+
+    return bestByProduct;
   }
 
   private async validateAndDeductStock(
