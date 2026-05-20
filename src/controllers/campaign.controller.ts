@@ -59,6 +59,14 @@ export class CampaignController extends BaseController<Campaign> {
     }
 
     const campaign = await this.campaignService.addProducts(id, productIds);
+    if (!campaign) {
+      res.status(404).json({
+        success: false,
+        error: { message: 'Không tìm thấy chiến dịch' },
+      });
+      return;
+    }
+
     res.json({
       success: true,
       data: campaign,
@@ -78,6 +86,14 @@ export class CampaignController extends BaseController<Campaign> {
     }
 
     const campaign = await this.campaignService.removeProducts(id, productIds);
+    if (!campaign) {
+      res.status(404).json({
+        success: false,
+        error: { message: 'Không tìm thấy chiến dịch' },
+      });
+      return;
+    }
+
     res.json({
       success: true,
       data: campaign,

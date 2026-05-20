@@ -1,9 +1,11 @@
 import { BaseService } from './base.service';
 import { Order } from '../entities/Order';
 import { OrderItem } from '../entities/OrderItem';
+import { Product } from '../entities/Product';
 import { User } from '../entities/User';
+import { Voucher } from '../entities/Voucher';
 import { OrderRepository } from '../repositories/order.repository';
-import { DeepPartial } from 'typeorm';
+import { DeepPartial, EntityManager } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { AppDataSource } from '../data-source';
 import { EmailService } from './email.service';
@@ -56,6 +58,11 @@ export class OrderService extends BaseService<Order> {
     
     // Extract items from request body
     const items = data.items || [];
+    if (!Array.isArray(items) || items.length === 0) {
+      throw new AppError('Đơn hàng phải có ít nhất một sản phẩm', 400);
+    }
+
+    const normalizedItems = this.normalizeOrderItems(items);
     const subtotal = Number(data.subtotal ?? items.reduce((sum: number, item: any) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0));
     const shippingFee = Number(data.shipping_fee ?? data.shippingFee ?? 0);
     let discountAmount = 0;
@@ -115,24 +122,25 @@ export class OrderService extends BaseService<Order> {
       is_verified: false,
     };
     
-    const order = await this.create(orderData);
-    
-    // Create order items
-    if (items.length > 0) {
-      const orderItemRepo = AppDataSource.getRepository(OrderItem);
-      const orderItems = items.map((item: any) => orderItemRepo.create({
-        order_id: order.id,
-        product_id: item.product_id || item.productId,
+    const order = await AppDataSource.transaction(async (manager) => {
+      await this.validateAndDeductStock(normalizedItems, manager);
+
+      const savedOrder = await manager.save(Order, manager.create(Order, orderData));
+      const orderItems = normalizedItems.map((item) => manager.create(OrderItem, {
+        order_id: savedOrder.id,
+        product_id: item.productId,
         price: item.price,
         quantity: item.quantity,
       }));
-      await orderItemRepo.save(orderItems);
-      order.order_items = orderItems;
-    }
+      await manager.save(OrderItem, orderItems);
+      savedOrder.order_items = orderItems;
 
-    if (voucherId) {
-      await this.voucherService.deductUsage(voucherId);
-    }
+      if (voucherId) {
+        await manager.increment(Voucher, { id: voucherId }, 'usage_count', 1);
+      }
+
+      return savedOrder;
+    });
     
     // Send OTP email to user
     try {
@@ -147,6 +155,53 @@ export class OrderService extends BaseService<Order> {
     }
     
     return order;
+  }
+
+  private normalizeOrderItems(items: any[]): Array<{ productId: string; quantity: number; price: number }> {
+    return items.map((item) => {
+      const productId = item.product_id || item.productId;
+      const quantity = Number(item.quantity || 0);
+      const price = Number(item.price || 0);
+
+      if (!productId) {
+        throw new AppError('Sản phẩm trong đơn hàng không hợp lệ', 400);
+      }
+      if (!Number.isInteger(quantity) || quantity <= 0) {
+        throw new AppError('Số lượng sản phẩm phải lớn hơn 0', 400);
+      }
+      if (price < 0) {
+        throw new AppError('Giá sản phẩm không hợp lệ', 400);
+      }
+
+      return { productId, quantity, price };
+    });
+  }
+
+  private async validateAndDeductStock(
+    items: Array<{ productId: string; quantity: number }>,
+    manager: EntityManager
+  ): Promise<void> {
+    const quantityByProduct = new Map<string, number>();
+    items.forEach((item) => {
+      quantityByProduct.set(item.productId, (quantityByProduct.get(item.productId) || 0) + item.quantity);
+    });
+
+    for (const [productId, quantity] of quantityByProduct.entries()) {
+      const product = await manager.findOne(Product, {
+        where: { id: productId, is_delete: false },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!product || !product.is_active) {
+        throw new AppError('Sản phẩm không tồn tại hoặc đã ngừng bán', 400);
+      }
+      if (Number(product.stock_quantity || 0) < quantity) {
+        throw new AppError(`Sản phẩm ${product.name} không đủ tồn kho`, 400);
+      }
+
+      product.stock_quantity = Number(product.stock_quantity || 0) - quantity;
+      await manager.save(Product, product);
+    }
   }
 
   async update(id: string, data: DeepPartial<Order>): Promise<Order | null> {
